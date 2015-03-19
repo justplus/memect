@@ -4,10 +4,10 @@
 import requests
 import MySQLdb
 from models.MemectType import MemectType
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from utils.weibo import Client
 import config
-import time
+import json
 
 
 class Memect(object):
@@ -20,7 +20,7 @@ class Memect(object):
         self.archive_date = archive_date
         # 初始化微博客户端
         self.weibo_client = Client(config.WEIBO_APPKEY, config.WEIBO_SECRET, config.WEIBO_REDIRECT_URL,
-                                   username=config.WEIBO_USER, passwrod=config.WEIBO_PASSWORD)
+                                   username=config.WEIBO_USER, password=config.WEIBO_PASSWORD)
 
     def grab_and_save(self):
         """抓取页面内容并保存到数据库
@@ -43,15 +43,18 @@ class Memect(object):
                 Memect.cursor.execute(insert_memect_tag)
                 Memect.con.commit()
 
-            # find all available threads
+            # find all available threads and insert into database
             headline_threads = set(bs.find_all('div', class_='today')) & set(bs.find_all('div', class_='headline'))
             for thread_tag in headline_threads:
-                weibo_id = thread_tag['id']
-                self.__set_memect_content(weibo_id, 0)
+                weibo_id = int(thread_tag['id'])
+                thread_id = self.__set_memect_content(weibo_id, 0)
+                self.__set_memect_thread_tag(thread_id, thread_tag)
             trend_thread = set(bs.find_all('div', class_='today')) - set(bs.find_all('div', class_='headline'))
             for thread_tag in trend_thread:
-                weibo_id = thread_tag['id']
-                self.__set_memect_content(weibo_id, 0)
+                weibo_id = int(thread_tag['id'])
+                thread_id = self.__set_memect_content(weibo_id, 1)
+                self.__set_memect_thread_tag(thread_id, thread_tag)
+
 
     def __get_memect_type(self):
         """根据类型缩写获取memect_type model
@@ -65,18 +68,25 @@ class Memect(object):
         """根据id获取微博内容并插入到数据库
         :category 0-焦点 1-动态
         """
-        weibo_content = self.weibo_client.get('statuses/show', id=weibo_id)
-        insert_memect_content = 'insert into memect_content(weibo_id, weibo_content, memect_type,' \
+        weibo_content = json.dumps(self.weibo_client.get('statuses/show', id=weibo_id))
+        insert_memect_content = 'insert into memect_thread(weibo_id, weibo_content, memect_type,' \
                                 ' create_time, memect_category) values (%d, \'%s\', %d, \'%s\', %d)' % \
-                                (weibo_id, weibo_content, self.memect_type.id,
-                                 time.strftime('%Y-%m-%d', time.localtime(time.time())), category)
+                                (weibo_id, weibo_content.replace('\'', '\\\''), self.memect_type.id, self.archive_date, category)
         Memect.cursor.execute(insert_memect_content)
+        thread_id = Memect.con.insert_id()
         Memect.con.commit()
+        return thread_id
 
-    def __set_memect_type(self):
-        """获取thread对应的标签(memect_type)
+    def __set_memect_thread_tag(self, thread_id, tag):
+        """获取thread对应的标签(memect_tag)并插入到数据库
         """
-        pass
+        for child in tag.find_all('span', class_='keyword'):
+            tag_name = child.string
+            insert_thread_tag = 'insert into memect_thread_tag(thread_id, tag_name) values(%d, \'%s\')' % \
+                                (thread_id, tag_name)
+            Memect.cursor.execute(insert_thread_tag)
+            Memect.con.commit()
+
 
 if __name__ == '__main__':
     m = Memect('py', '2015-03-14')

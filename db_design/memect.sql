@@ -11,7 +11,7 @@
  Target Server Version : 50622
  File Encoding         : utf-8
 
- Date: 03/16/2015 21:48:33 PM
+ Date: 03/20/2015 00:25:11 AM
 */
 
 SET NAMES utf8;
@@ -29,10 +29,21 @@ CREATE TABLE `memect_comment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
---  Table structure for `memect_content`
+--  Table structure for `memect_tag`
 -- ----------------------------
-DROP TABLE IF EXISTS `memect_content`;
-CREATE TABLE `memect_content` (
+DROP TABLE IF EXISTS `memect_tag`;
+CREATE TABLE `memect_tag` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tag_name` varchar(255) NOT NULL COMMENT '标签名称',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tag_name` (`tag_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=651 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+--  Table structure for `memect_thread`
+-- ----------------------------
+DROP TABLE IF EXISTS `memect_thread`;
+CREATE TABLE `memect_thread` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '编号',
   `weibo_id` bigint(20) DEFAULT NULL COMMENT '对应的微博编号',
   `weibo_content` text COMMENT '对应的微博内容',
@@ -40,18 +51,18 @@ CREATE TABLE `memect_content` (
   `create_time` date DEFAULT NULL COMMENT '发布日期',
   `memect_category` tinyint(4) DEFAULT NULL COMMENT '所属类别 0:推荐 1:最新动态',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
---  Table structure for `memect_tag`
+--  Table structure for `memect_thread_tag`
 -- ----------------------------
-DROP TABLE IF EXISTS `memect_tag`;
-CREATE TABLE `memect_tag` (
+DROP TABLE IF EXISTS `memect_thread_tag`;
+CREATE TABLE `memect_thread_tag` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '编号',
-  `tag_name` varchar(255) NOT NULL COMMENT '标签名称',
-  `memect_type` smallint(6) DEFAULT NULL COMMENT '对应的memect_type',
+  `thread_id` int(11) DEFAULT NULL COMMENT 'thread编号',
+  `tag_name` varchar(50) DEFAULT NULL COMMENT 'tag名称',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=475 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 --  Table structure for `memect_type`
@@ -64,12 +75,5 @@ CREATE TABLE `memect_type` (
   `url` varchar(255) DEFAULT NULL COMMENT '分类url',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
-
--- ----------------------------
---  Records of `memect_type`
--- ----------------------------
-BEGIN;
-INSERT INTO `memect_type` VALUES ('1', 'python日报', 'py', 'http://py.memect.com/'), ('2', '机器学些日报', 'ml', 'http://ml.memect.com/'), ('3', 'web技术日报', 'web', 'http://web.memect.com/'), ('4', '大数据日报', 'bd', 'http://bd.memect.com/'), ('5', 'app开发日报', 'app', 'http://app.memect.com/');
-COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
