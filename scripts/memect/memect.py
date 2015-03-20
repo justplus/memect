@@ -16,6 +16,10 @@ class Memect(object):
     cursor = con.cursor()
 
     def __init__(self, memect_type_abbr, archive_date):
+        """构造函数
+        :param memect_type_abbr: abbr, 如需要抓取机器学习日报，填ml, 具体参照memect_type
+        :param archive_date: 日报对应的日期，格式为:%Y-%m-%d
+        """
         self.memect_type_abbr = memect_type_abbr
         self.archive_date = archive_date
         # 初始化微博客户端
@@ -66,7 +70,7 @@ class Memect(object):
 
     def __set_memect_content(self, weibo_id, category):
         """根据id获取微博内容并插入到数据库
-        :category 0-焦点 1-动态
+        :param category: 0-焦点 1-动态
         """
         weibo_content = json.dumps(self.weibo_client.get('statuses/show', id=weibo_id))
         insert_memect_content = 'insert into memect_thread(weibo_id, weibo_content, memect_type,' \
