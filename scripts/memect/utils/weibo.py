@@ -36,6 +36,8 @@ class Client(object):
         self.client_secret = api_secret
         self.redirect_uri = redirect_uri
 
+        self.saved_token = None
+
         self.session = requests.session()
         if username and password:
             self.session.auth = username, password
@@ -62,19 +64,23 @@ class Client(object):
     def set_code(self, authorization_code):
         """Activate client by authorization_code.
         """
-        params = {
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-            'grant_type': 'authorization_code',
-            'code': authorization_code,
-            'redirect_uri': self.redirect_uri
-        }
-        res = requests.post(self.token_url, data=params)
-        token = json.loads(res.text)
-        self._assert_error(token)
+        if self.saved_token:
+            self.set_token(self.saved_token)
+        else:
+            params = {
+                'client_id': self.client_id,
+                'client_secret': self.client_secret,
+                'grant_type': 'authorization_code',
+                'code': authorization_code,
+                'redirect_uri': self.redirect_uri
+            }
+            res = requests.post(self.token_url, data=params)
+            token = json.loads(res.text)
+            self._assert_error(token)
 
-        token[u'expires_at'] = int(time.time()) + int(token.pop(u'expires_in'))
-        self.set_token(token)
+            token[u'expires_at'] = int(time.time()) + int(token.pop(u'expires_in'))
+            self.saved_token = token
+            self.set_token(token)
 
     def set_token(self, token):
         """Directly activate client by access_token.
